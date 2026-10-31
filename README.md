@@ -2,7 +2,18 @@
 
 > **"Inteligência farmacêutica ao alcance de todos"**
 
-NEXFAR é uma plataforma SaaS profissional desenvolvida especificamente para o mercado farmacêutico brasileiro, oferecendo ferramentas clínicas e operacionais para balconistas, atendentes, farmacêuticos responsáveis técnicos (RT), gestores de drogarias e estudantes.
+[![Android Build](https://img.shields.io/badge/Android-Jetpack%20Compose-3DDC84?logo=android&logoColor=white)](https://github.com/walexfh/nexfar/releases/tag/v1.0.0)
+[![Vercel Deployment](https://img.shields.io/badge/Vercel-Live%20Deploy-black?logo=vercel)](https://speedy-opal-3medrmg.tmp.now)
+[![Supabase](https://img.shields.io/badge/Supabase-Database%20DDL-3ECF8E?logo=supabase&logoColor=white)](./supabase_schema.sql)
+[![Release APK](https://img.shields.io/badge/Download-APK%20v1.0.0-20A89A)](https://github.com/walexfh/nexfar/releases/download/v1.0.0/nexfar-app-debug.apk)
+
+---
+
+### 🚀 Acessos Rápidos
+- 📱 **Download do APK Android:** [nexfar-app-debug.apk (v1.0.0)](https://github.com/walexfh/nexfar/releases/download/v1.0.0/nexfar-app-debug.apk)
+- 🌐 **Aplicação Web Online (Vercel):** [https://speedy-opal-3medrmg.tmp.now](https://speedy-opal-3medrmg.tmp.now)
+- 🗄️ **Esquema do Banco de Dados (Supabase):** [`supabase_schema.sql`](./supabase_schema.sql)
+- 📦 **Repositório GitHub:** [https://github.com/walexfh/nexfar](https://github.com/walexfh/nexfar)
 
 ---
 
