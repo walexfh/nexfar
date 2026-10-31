@@ -1,0 +1,6 @@
+{
+  "name": "NEXFAR",
+  "description": "Plataforma SaaS farmacêutica inteligente com bulário ANVISA, calculadoras clínicas, assistente de IA, simulados e gestão multi-tenant.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
