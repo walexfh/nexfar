@@ -28,12 +28,87 @@ data class Organization(
 )
 
 enum class MedicineTarja(val label: String, val colorHex: Long) {
-    LIVRE("Isento (MIP)", 0xFF059669),
-    VERMELHA_SEM_RETENCAO("Tarja Vermelha (Sob Prescrição)", 0xFFDC2626),
-    VERMELHA_RETENCAO("Tarja Vermelha (Retenção de Receita)", 0xFFB91C1C),
-    PRETA("Tarja Preta (Controle Especial)", 0xFF1E293B),
-    AMARELA("Genérico", 0xFFD97706)
+    LIVRE("Isento (Venda Livre)", 0xFF10B981),
+    SEM_TARJA_LIVRE("Isento (Venda Livre)", 0xFF10B981),
+    VERMELHA_SEM_RETENCAO("Tarja Vermelha (Sem Retenção)", 0xFFEF4444),
+    VERMELHA_RETENCAO("Tarja Vermelha (Sob Retenção)", 0xFFDC2626),
+    PRETA("Tarja Preta (Psicotrópicos)", 0xFF111827),
+    AMARELA_GENERICO("Genérico (Lei 9.787/99)", 0xFFEAB308)
 }
+
+enum class PrescriptionType(
+    val label: String,
+    val badgeShort: String,
+    val colorHex: Long,
+    val textColorHex: Long,
+    val description: String,
+    val validityDays: String
+) {
+    RECEITA_BRANCA_SIMPLES(
+        "Receita Branca Comum (1 via)",
+        "Branca Simples",
+        0xFFE2E8F0,
+        0xFF1E293B,
+        "Sob prescrição sem retenção obrigatória de via",
+        "Validade: conforme prescritor"
+    ),
+    RECEITA_CONTROLE_ESPECIAL(
+        "Receita de Controle Especial (2 vias)",
+        "Branca 2 Vias",
+        0xFFDBEAFE,
+        0xFF1E40AF,
+        "Antimicrobianos (RDC 20/2011) ou Substâncias C1 da Portaria 344/98",
+        "Antimicrobianos: 10 dias | Psicotrópicos C1: 30 dias"
+    ),
+    NOTIFICACAO_B_AZUL(
+        "Notificação de Receita B (Azul)",
+        "Receita Azul B",
+        0xFFBFDBFE,
+        0xFF1D4ED8,
+        "Psicotrópicos e Ansiolíticos (Listas B1 e B2 da Portaria 344/98)",
+        "Validade: 30 dias no estado de emissão"
+    ),
+    NOTIFICACAO_A_AMARELA(
+        "Notificação de Receita A (Amarela)",
+        "Receita Amarela A",
+        0xFFFEF08A,
+        0xFF854D0E,
+        "Entorpecentes e Psicoestimulantes (Listas A1, A2 e A3 da Portaria 344/98)",
+        "Validade: 30 dias em todo o Brasil"
+    ),
+    ISENTO_MIP(
+        "Medicamento Isento de Prescrição (MIP)",
+        "Venda Livre",
+        0xFFD1FAE5,
+        0xFF065F46,
+        "Dispensação orientada sem exigência de receita médica",
+        "Dispensação livre no balcão"
+    )
+}
+
+data class InterchangeableDrug(
+    val id: String,
+    val activeIngredient: String,
+    val therapeuticClass: String,
+    val referenceBrand: String, // Ético (Referência)
+    val genericName: String,     // Genérico
+    val similarBrands: List<String>, // Similar Equivalente (EQ)
+    val prescriptionType: PrescriptionType,
+    val tarja: MedicineTarja,
+    val clinicalTip: String
+)
+
+data class UserAccessAccount(
+    val id: String,
+    val userName: String,
+    val email: String,
+    val crfNumber: String = "",
+    val pharmacyName: String,
+    val cnpj: String,
+    val planTier: PlanTier,
+    val status: String = "ATIVO", // "ATIVO", "PENDENTE_APROVACAO", "BLOQUEADO"
+    val dateRegistered: String = "31/10/2026"
+)
 
 data class Medicine(
     val id: String,
@@ -53,7 +128,11 @@ data class Medicine(
     val posologyApproved: String,
     val clinicalWarnings: List<String>,
     val anvisaSource: String = "Bulário Eletrônico ANVISA / Farmacopeia Brasileira 6ª Ed.",
-    val lastUpdated: String = "Outubro/2026"
+    val lastUpdated: String = "Outubro/2026",
+    val prescriptionType: PrescriptionType = PrescriptionType.RECEITA_BRANCA_SIMPLES,
+    val referenceBrand: String = "",
+    val genericName: String = "",
+    val similarBrands: List<String> = emptyList()
 )
 
 enum class CalculatorType(val title: String, val subtitle: String, val formula: String) {

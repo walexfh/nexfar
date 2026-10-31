@@ -67,7 +67,10 @@ fun DashboardScreen(
                     ) {
                         Column {
                             Text(
-                                text = "BOM DIA, DR. WALEX",
+                                text = if (NexfarRepository.currentUser.name.isNotBlank() && NexfarRepository.isUserLoggedIn) 
+                                    "BOM DIA, ${NexfarRepository.currentUser.name.uppercase()}" 
+                                else 
+                                    "BOM DIA, PROFISSIONAL DE SAÚDE",
                                 color = NexfarTealAccent,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.ExtraBold,

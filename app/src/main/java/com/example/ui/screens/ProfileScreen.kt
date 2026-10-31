@@ -15,24 +15,30 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.NexfarRepository
 import com.example.model.Organization
+import com.example.model.UserRole
 import com.example.ui.theme.*
 
 @Composable
 fun ProfileScreen(
     currentOrganization: Organization,
     onNavigateToPlans: () -> Unit,
+    onLogout: () -> Unit = {},
+    onNavigateToAdmin: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     var notifyAnvisaAlerts by remember { mutableStateOf(true) }
-    var soundEffects by remember { mutableStateOf(true) }
     var autoSaveDrafts by remember { mutableStateOf(true) }
+
+    var showEditProfileDialog by remember { mutableStateOf(false) }
+    var editName by remember { mutableStateOf(NexfarRepository.currentUser.name) }
+    var editEmail by remember { mutableStateOf(NexfarRepository.currentUser.email) }
+    var editCrf by remember { mutableStateOf(NexfarRepository.currentUser.crfNumber) }
 
     LazyColumn(
         modifier = modifier
@@ -58,7 +64,7 @@ fun ProfileScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "WF",
+                            text = NexfarRepository.currentUser.avatarInitials,
                             color = Color.White,
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold
@@ -89,23 +95,73 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = NexfarNavyDark
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = { showEditProfileDialog = true },
+                            colors = ButtonDefaults.buttonColors(containerColor = NexfarNavyLight),
+                            shape = RoundedCornerShape(8.dp)
                         ) {
-                            Icon(Icons.Default.Storefront, contentDescription = null, tint = NexfarTealAccent, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "${currentOrganization.name} (${currentOrganization.planName})",
-                                color = Color.White,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium
-                            )
+                            Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Editar Meus Dados", fontSize = 11.sp)
                         }
+
+                        Button(
+                            onClick = onLogout,
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFDC2626)),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Icon(Icons.Default.Logout, contentDescription = null, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Sair / Trocar Conta", fontSize = 11.sp)
+                        }
+                    }
+                }
+            }
+        }
+
+        // Master SaaS Access Panel Shortcut Card
+        item {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(containerColor = NexfarNavyDark)
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.AdminPanelSettings, contentDescription = null, tint = NexfarTealAccent, modifier = Modifier.size(22.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text("PAINEL MASTER DO PROPRIETÁRIO", fontSize = 11.sp, color = NexfarTealAccent, fontWeight = FontWeight.Bold)
+                                Text("Gerenciador de Acessos & Planos", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Aprove novos cadastros de farmácias, libere licenças e gerencie quem pode acessar cada plano contratado.",
+                        fontSize = 11.sp,
+                        color = NexfarTextMuted
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Button(
+                        onClick = onNavigateToAdmin,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = NexfarTeal)
+                    ) {
+                        Icon(Icons.Default.Security, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Acessar Painel Master", fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                 }
             }
@@ -116,7 +172,7 @@ fun ProfileScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 10.dp),
+                    .padding(horizontal = 14.dp, vertical = 4.dp),
                 shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -139,7 +195,7 @@ fun ProfileScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
                     Text("• Consultas IA ilimitadas neste ciclo", fontSize = 11.sp, color = NexfarTextSecondary)
-                    Text("• 3 de 5 vagas de balconistas ativas no estabelecimento", fontSize = 11.sp, color = NexfarTextSecondary)
+                    Text("• Usuários vinculados ao estabelecimento ativos", fontSize = 11.sp, color = NexfarTextSecondary)
 
                     Spacer(modifier = Modifier.height(10.dp))
                     OutlinedButton(
@@ -147,7 +203,7 @@ fun ProfileScreen(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text("Gerenciar ou Fazer Upgrade", color = NexfarNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text("Gerenciar ou Fazer Upgrade de Plano", color = NexfarNavy, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     }
                 }
             }
@@ -155,7 +211,7 @@ fun ProfileScreen(
 
         // Preferences & Settings
         item {
-            Column(modifier = Modifier.padding(horizontal = 14.dp)) {
+            Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
                 Text(
                     text = "PREFERÊNCIAS & SEGURANÇA",
                     color = NexfarTextSecondary,
@@ -201,11 +257,11 @@ fun ProfileScreen(
             }
         }
 
-        // Help & Support
+        // Support Card
         item {
-            Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 14.dp)) {
+            Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp)) {
                 Text(
-                    text = "SUPORTE & COMPLIANCE",
+                    text = "SUPORTE & CONFORMIDADE",
                     color = NexfarTextSecondary,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
@@ -236,5 +292,58 @@ fun ProfileScreen(
                 }
             }
         }
+    }
+
+    // Edit Profile Dialog
+    if (showEditProfileDialog) {
+        AlertDialog(
+            onDismissRequest = { showEditProfileDialog = false },
+            title = { Text("Atualizar Meus Dados Profissionais", fontWeight = FontWeight.Bold, color = NexfarNavy) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = editName,
+                        onValueChange = { editName = it },
+                        label = { Text("Nome Completo") },
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = editEmail,
+                        onValueChange = { editEmail = it },
+                        label = { Text("E-mail Profissional") },
+                        singleLine = true
+                    )
+                    OutlinedTextField(
+                        value = editCrf,
+                        onValueChange = { editCrf = it },
+                        label = { Text("Número do CRF (Ex: CRF-SP 12.345)") },
+                        singleLine = true
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        NexfarRepository.loginUser(
+                            name = editName,
+                            email = editEmail,
+                            crf = editCrf,
+                            orgName = currentOrganization.name,
+                            role = if (editCrf.isNotBlank() && editCrf.contains("CRF", ignoreCase = true)) UserRole.PHARMACIST_RT else UserRole.ATTENDANT
+                        )
+                        showEditProfileDialog = false
+                        Toast.makeText(context, "Dados atualizados com sucesso!", Toast.LENGTH_SHORT).show()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = NexfarTeal)
+                ) {
+                    Text("Salvar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditProfileDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 }

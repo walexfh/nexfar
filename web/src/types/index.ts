@@ -78,6 +78,42 @@ export interface ActiveIngredient {
   renalAdjustmentNeeded: boolean;
 }
 
+export type PrescriptionType = 
+  | 'ISENTO_MIP'
+  | 'BRANCA_SIMPLES'
+  | 'BRANCA_2VIAS_ANTIMICROBIANO'
+  | 'BRANCA_2VIAS_C1'
+  | 'NOTIFICACAO_B_AZUL'
+  | 'NOTIFICACAO_B2_AZUL'
+  | 'NOTIFICACAO_A_AMARELA'
+  | 'TALIDOMIDA_ESPECIAL';
+
+export interface InterchangeableDrug {
+  id: string;
+  activeIngredient: string;
+  dosage: string;
+  referenceDrug: string; // Medicamento de Referência (Ético)
+  referenceLab: string;
+  genericOptions: string[]; // Genéricos registrados (Lei 9.787/99)
+  similarEquivalents: string[]; // Similares Equivalentes (EQ - RDC 58/2014)
+  therapeuticClass: string;
+  prescriptionType: PrescriptionType;
+  prescriptionLabel: string;
+  clerkTip: string; // Dica prática para o balconista
+}
+
+export interface UserAccessAccount {
+  id: string;
+  userName: string;
+  email: string;
+  crfNumber: string;
+  pharmacyName: string;
+  cnpj: string;
+  planTier: 'INDIVIDUAL' | 'PROFISSIONAL' | 'ESTABELECIMENTO';
+  status: 'ATIVO' | 'PENDENTE' | 'BLOQUEADO';
+  dateRegistered: string;
+}
+
 export interface Medicine {
   id: string;
   tradeName: string;
@@ -87,6 +123,11 @@ export interface Medicine {
   manufacturer: string;
   anvisaRegistry: string;
   tarja: 'LIVRE' | 'VERMELHA_SEM_RETENCAO' | 'VERMELHA_RETENCAO' | 'PRETA' | 'AMARELA';
+  prescriptionType: PrescriptionType;
+  prescriptionDescription: string;
+  referenceBrand?: string;
+  genericName?: string;
+  similarBrands?: string;
   isGeneric: boolean;
   pmcPrice: number;
   approvedIndications: string[];

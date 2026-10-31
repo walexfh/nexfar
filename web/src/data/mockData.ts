@@ -1,4 +1,4 @@
-import { Medicine, Organization, Pathology, QuizQuestion, KnowledgeArticle } from '../types';
+import { Medicine, Organization, Pathology, QuizQuestion, KnowledgeArticle, InterchangeableDrug, UserAccessAccount } from '../types';
 
 export const organizations: Organization[] = [
   {
@@ -25,7 +25,7 @@ export const organizations: Organization[] = [
   },
   {
     id: "org_3",
-    name: "Consultório Dr. Walex Ferreira (Autônomo)",
+    name: "Consultório Clínico Independente",
     cnpj: "45.123.890/0001-44",
     licenseNumber: "AFE 3.45678.9",
     planId: "professional",
@@ -57,6 +57,11 @@ export const medicines: Medicine[] = [
     manufacturer: "GlaxoSmithKline Brasil Ltda.",
     anvisaRegistry: "MS 1.0107.0169.006-1",
     tarja: "VERMELHA_RETENCAO",
+    prescriptionType: "BRANCA_2VIAS_ANTIMICROBIANO",
+    prescriptionDescription: "Receita de Controle Especial em 2 Vias (RDC 20/2011) - Validade: 10 dias corridos",
+    referenceBrand: "Clavulin (GSK)",
+    genericName: "Amoxicilina + Clavulanato de Potássio (EMS, Eurofarma, Medley, Neo Química)",
+    similarBrands: "Sinot Clav (Eurofarma), Amobiotic (Aché), Novocilin Clav (EMS)",
     isGeneric: false,
     pmcPrice: 112.45,
     approvedIndications: [
@@ -77,7 +82,7 @@ export const medicines: Medicine[] = [
     posologyApproved: "Adultos: 1 comprimido a cada 12 horas (2x ao dia), preferencialmente no início da refeição.",
     clinicalWarnings: [
       "Receituário de Controle Especial em 2 vias (RDC 20/2011)",
-      "Validade da receita: 10 dias corridos",
+      "Validade da receita: 10 dias corridos a partir da emissão",
       "Não fracionar ou mastigar o comprimido revestido"
     ],
     anvisaSource: "Bulário Eletrônico ANVISA",
@@ -92,6 +97,11 @@ export const medicines: Medicine[] = [
     manufacturer: "EMS S/A",
     anvisaRegistry: "MS 1.0235.0689.002-3",
     tarja: "VERMELHA_SEM_RETENCAO",
+    prescriptionType: "BRANCA_SIMPLES",
+    prescriptionDescription: "Receita Branca Simples (1 via) - Validade: até 180 dias para hipertensão",
+    referenceBrand: "Cozaar (Merck Sharp & Dohme)",
+    genericName: "Losartana Potássica 50mg (EMS, Medley, Neo Química, Aché)",
+    similarBrands: "Corus (Biolab), Zaarpress (Torrent), Aradois (Biolab)",
     isGeneric: true,
     pmcPrice: 18.90,
     approvedIndications: [
@@ -126,6 +136,11 @@ export const medicines: Medicine[] = [
     manufacturer: "Merck S/A",
     anvisaRegistry: "MS 1.0089.0340.003-9",
     tarja: "VERMELHA_SEM_RETENCAO",
+    prescriptionType: "BRANCA_SIMPLES",
+    prescriptionDescription: "Receita Branca Simples (1 via) - Validade: até 180 dias para diabetes",
+    referenceBrand: "Glifage / Glifage XR (Merck)",
+    genericName: "Cloridrato de Metformina (EMS, Medley, Prati-Donaduzzi, Eurofarma)",
+    similarBrands: "Dimefor (Farmoquímica), Glucoformin (Biolab)",
     isGeneric: false,
     pmcPrice: 24.30,
     approvedIndications: [
@@ -159,6 +174,11 @@ export const medicines: Medicine[] = [
     manufacturer: "Produtos Roche Químicos e Farmacêuticos S.A.",
     anvisaRegistry: "MS 1.0100.0067.009-8",
     tarja: "PRETA",
+    prescriptionType: "NOTIFICACAO_B_AZUL",
+    prescriptionDescription: "Notificação de Receita B (Azul) - Portaria 344/98 - Validade: 30 dias no estado emissor",
+    referenceBrand: "Rivotril (Roche)",
+    genericName: "Clonazepam (EMS, Medley, Eurofarma, Biosintética, Geolab)",
+    similarBrands: "Epilac (Cristália), Clonavan (Germed)",
     isGeneric: false,
     pmcPrice: 36.80,
     approvedIndications: [
@@ -191,6 +211,11 @@ export const medicines: Medicine[] = [
     manufacturer: "Sanofi Medley Farmacêutica Ltda.",
     anvisaRegistry: "MS 1.8326.0123.004-5",
     tarja: "LIVRE",
+    prescriptionType: "ISENTO_MIP",
+    prescriptionDescription: "Medicamento Isento de Prescrição (MIP) - Sem retenção de receita",
+    referenceBrand: "Novalgina (Sanofi)",
+    genericName: "Dipirona Monoidratada (Medley, EMS, Neo Química, Prati-Donaduzzi, Teuto)",
+    similarBrands: "Anador (Boehringer), Dorflex, Lisador",
     isGeneric: false,
     pmcPrice: 28.50,
     approvedIndications: [
@@ -212,6 +237,199 @@ export const medicines: Medicine[] = [
     ],
     anvisaSource: "Bulário Eletrônico ANVISA",
     lastUpdated: "2026-09-12"
+  }
+];
+
+export const interchangeableDrugs: InterchangeableDrug[] = [
+  {
+    id: "int_1",
+    activeIngredient: "Amoxicilina + Clavulanato de Potássio",
+    dosage: "875 mg + 125 mg",
+    referenceDrug: "Clavulin BD",
+    referenceLab: "GlaxoSmithKline (GSK)",
+    genericOptions: ["Amoxicilina + Clavulanato EMS", "Eurofarma", "Medley", "Neo Química", "Sandoz"],
+    similarEquivalents: ["Sinot Clav (Eurofarma)", "Amobiotic (Aché)", "Novocilin Clav (EMS)"],
+    therapeuticClass: "Antibacteriano Betalactâmico + Inibidor de Betalactamase",
+    prescriptionType: "BRANCA_2VIAS_ANTIMICROBIANO",
+    prescriptionLabel: "Receita Branca 2 Vias (RDC 20/2011 - Validade 10 dias)",
+    clerkTip: "Atenção: Frascos de suspensão devem ser mantidos em geladeira após reconstituição. Tomar no início das refeições para diminuir náuseas e desconforto gástrico."
+  },
+  {
+    id: "int_2",
+    activeIngredient: "Dipirona Monoidratada",
+    dosage: "1.000 mg (1 g)",
+    referenceDrug: "Novalgina",
+    referenceLab: "Sanofi-Aventis",
+    genericOptions: ["Dipirona Monoidratada Medley", "EMS", "Neo Química", "Prati-Donaduzzi", "Teuto"],
+    similarEquivalents: ["Anador (Boehringer)", "Dorflex (Dipirona composta)", "Lisador"],
+    therapeuticClass: "Analgésico e Antipirético",
+    prescriptionType: "ISENTO_MIP",
+    prescriptionLabel: "Medicamento Isento de Prescrição (MIP)",
+    clerkTip: "Não requer receita. Perguntar sempre se o paciente tem alergia a pirazolonas ou histórico de queda severa de pressão."
+  },
+  {
+    id: "int_3",
+    activeIngredient: "Cloridrato de Metformina",
+    dosage: "500 mg e 850 mg (XR / LP)",
+    referenceDrug: "Glifage / Glifage XR",
+    referenceLab: "Merck S/A",
+    genericOptions: ["Cloridrato de Metformina EMS", "Medley", "Prati-Donaduzzi", "Eurofarma"],
+    similarEquivalents: ["Dimefor (Farmoquímica)", "Glucoformin (Biolab)"],
+    therapeuticClass: "Antidiabético Biguanida",
+    prescriptionType: "BRANCA_SIMPLES",
+    prescriptionLabel: "Receita Branca Simples (Validade 180 dias)",
+    clerkTip: "A formulação XR (liberação prolongada) NÃO deve ser partida, mastigada ou triturada. Tomar sempre com o jantar para evitar desconforto intestinal."
+  },
+  {
+    id: "int_4",
+    activeIngredient: "Clonazepam",
+    dosage: "0,5 mg e 2,0 mg",
+    referenceDrug: "Rivotril",
+    referenceLab: "Produtos Roche Químicos",
+    genericOptions: ["Clonazepam EMS", "Medley", "Eurofarma", "Biosintética", "Geolab"],
+    similarEquivalents: ["Epilac (Cristália)", "Clonavan (Germed)"],
+    therapeuticClass: "Ansiolítico / Anticonvulsivante (Benzodiazepínico)",
+    prescriptionType: "NOTIFICACAO_B_AZUL",
+    prescriptionLabel: "Notificação de Receita B (Azul - Portaria 344/98 - Validade 30 dias)",
+    clerkTip: "Exige Notificação de Receita Azul com identificação do comprador, RG e endereço completos. Retenção compulsória e lançamento no SNGPC."
+  },
+  {
+    id: "int_5",
+    activeIngredient: "Losartana Potássica",
+    dosage: "50 mg e 100 mg",
+    referenceDrug: "Cozaar",
+    referenceLab: "Merck Sharp & Dohme (MSD)",
+    genericOptions: ["Losartana Potássica EMS", "Medley", "Neo Química", "Eurofarma", "Aché"],
+    similarEquivalents: ["Corus (Biolab)", "Zaarpress (Torrent)", "Aradois (Biolab)"],
+    therapeuticClass: "Anti-hipertensivo (Bloqueador do Receptor de Angiotensina II - BRA)",
+    prescriptionType: "BRANCA_SIMPLES",
+    prescriptionLabel: "Receita Branca Simples (Validade 180 dias)",
+    clerkTip: "Alerta importante: nunca associar com anti-inflamatórios como Ibuprofeno sem orientação médica, pois o anti-inflamatório corta o efeito da Losartana e sobrecarrega os rins."
+  },
+  {
+    id: "int_6",
+    activeIngredient: "Omeprazol / Esomeprazol",
+    dosage: "20 mg e 40 mg",
+    referenceDrug: "Losec Mups / Nexium",
+    referenceLab: "AstraZeneca",
+    genericOptions: ["Omeprazol EMS", "Medley", "Eurofarma", "Neo Química", "Cimed"],
+    similarEquivalents: ["Peprazol (Libbs)", "Gastrium (Aché)", "Victrix (Biolab)"],
+    therapeuticClass: "Inibidor da Bomba de Prótons (IBP)",
+    prescriptionType: "BRANCA_SIMPLES",
+    prescriptionLabel: "Receita Branca Simples ou Isento conforme dosagem",
+    clerkTip: "Tomar pela manhã, em jejum, 30 a 60 minutos antes do café da manhã com água. Não mastigar as microesferas."
+  },
+  {
+    id: "int_7",
+    activeIngredient: "Cloridrato de Metilfenidato",
+    dosage: "10 mg / 18 mg / 36 mg",
+    referenceDrug: "Ritalina / Concerta",
+    referenceLab: "Novartis / Janssen-Cilag",
+    genericOptions: ["Metilfenidato EMS", "Althaia"],
+    similarEquivalents: ["Ragione (Torrent)"],
+    therapeuticClass: "Psicoestimulante SNC (TDAH e Narcolepsia)",
+    prescriptionType: "NOTIFICACAO_A_AMARELA",
+    prescriptionLabel: "Notificação de Receita A (Amarela - Portaria 344/98 - Validade 30 dias)",
+    clerkTip: "Exige Notificação Amarela oficial da vigilância sanitária local. Máximo de 30 dias de tratamento por receituário."
+  },
+  {
+    id: "int_8",
+    activeIngredient: "Paracetamol",
+    dosage: "500 mg e 750 mg",
+    referenceDrug: "Tylenol",
+    referenceLab: "Kenvue / Johnson & Johnson",
+    genericOptions: ["Paracetamol Medley", "EMS", "Neo Química", "Cimed"],
+    similarEquivalents: ["Dorico (Sanofi)", "Tylid (União Química)"],
+    therapeuticClass: "Analgésico e Antipirético",
+    prescriptionType: "ISENTO_MIP",
+    prescriptionLabel: "Medicamento Isento de Prescrição (MIP)",
+    clerkTip: "Orientar dose máxima diária de 4.000 mg em adultos (ou 2.000 mg se uso de álcool ou hepatopatia). Risco de necrose hepática aguda com superdosagem."
+  },
+  {
+    id: "int_9",
+    activeIngredient: "Cloridrato de Fluoxetina",
+    dosage: "20 mg",
+    referenceDrug: "Prozac",
+    referenceLab: "Eli Lilly",
+    genericOptions: ["Fluoxetina EMS", "Medley", "Eurofarma", "Neo Química"],
+    similarEquivalents: ["Daforin (EMS)", "Verotina (Libbs)", "Fluxene (Biolab)"],
+    therapeuticClass: "Antidepressivo ISRS (Inibidor Seletivo da Recaptação de Serotonina)",
+    prescriptionType: "BRANCA_2VIAS_C1",
+    prescriptionLabel: "Receita de Controle Especial em 2 Vias (C1 - Portaria 344/98 - Validade 30 dias)",
+    clerkTip: "Receita em 2 vias branca C1. Orientar que o efeito terapêutico pleno pode demorar de 2 a 4 semanas para se consolidar."
+  },
+  {
+    id: "int_10",
+    activeIngredient: "Atorvastatina Cálcica",
+    dosage: "10 mg, 20 mg e 40 mg",
+    referenceDrug: "Lipitor",
+    referenceLab: "Pfizer",
+    genericOptions: ["Atorvastatina EMS", "Medley", "Eurofarma", "Aché"],
+    similarEquivalents: ["Citalor (Pfizer)", "Plenance (Torrent)"],
+    therapeuticClass: "Hipolipemiante (Inibidor da HMG-CoA Redutase / Estatina)",
+    prescriptionType: "BRANCA_SIMPLES",
+    prescriptionLabel: "Receita Branca Simples (Validade 180 dias)",
+    clerkTip: "Preferencialmente administrada à noite. Orientar o paciente a relatar dores musculares intensas sem explicação (risco de mialgia/rabdomiólise)."
+  },
+  {
+    id: "int_11",
+    activeIngredient: "Ibuprofeno",
+    dosage: "400 mg e 600 mg",
+    referenceDrug: "Advil / Alivium",
+    referenceLab: "Haleon / Hypera",
+    genericOptions: ["Ibuprofeno EMS", "Medley", "Prati-Donaduzzi", "Neo Química"],
+    similarEquivalents: ["Dalsy (Abbott)", "Ibupril (Teuto)"],
+    therapeuticClass: "Anti-inflamatório Não Esteroidal (AINE)",
+    prescriptionType: "ISENTO_MIP",
+    prescriptionLabel: "MIP (até 400mg) / Receita Branca Simples (600mg)",
+    clerkTip: "Tomar sempre após refeições com um copo cheio de água. Contraindicado para quem tem úlcera gástrica ativa, insuficiência renal ou hipertensão descontrolada."
+  }
+];
+
+export const initialAccessAccounts: UserAccessAccount[] = [
+  {
+    id: "acc_1",
+    userName: "Farmacêutico Responsável (Admin)",
+    email: "admin.farmacia@nexfar.com.br",
+    crfNumber: "CRF Ativo",
+    pharmacyName: "Drogarias FarmaVida",
+    cnpj: "98.765.432/0002-11",
+    planTier: "ESTABELECIMENTO",
+    status: "ATIVO",
+    dateRegistered: "28/10/2026"
+  },
+  {
+    id: "acc_2",
+    userName: "Dra. Beatriz Santos",
+    email: "beatriz.farmacia@gmail.com",
+    crfNumber: "CRF-MG 31.420",
+    pharmacyName: "Consultório Clínico Independente",
+    cnpj: "45.123.890/0001-44",
+    planTier: "PROFISSIONAL",
+    status: "ATIVO",
+    dateRegistered: "29/10/2026"
+  },
+  {
+    id: "acc_3",
+    userName: "Marcos Vinicius (Balconista)",
+    email: "marcos.atendente@drogariapopular.com",
+    crfNumber: "Matrícula 8912",
+    pharmacyName: "Drogaria Popular Central",
+    cnpj: "12.345.678/0001-90",
+    planTier: "INDIVIDUAL",
+    status: "PENDENTE",
+    dateRegistered: "30/10/2026"
+  },
+  {
+    id: "acc_4",
+    userName: "Dra. Camila Nogueira",
+    email: "camila.farm@outlook.com",
+    crfNumber: "CRF-RJ 22.845",
+    pharmacyName: "Farmácia Magistral Arte & Cura",
+    cnpj: "33.222.111/0001-55",
+    planTier: "PROFISSIONAL",
+    status: "BLOQUEADO",
+    dateRegistered: "15/10/2026"
   }
 ];
 

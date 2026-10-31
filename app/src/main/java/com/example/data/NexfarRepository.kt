@@ -1,5 +1,9 @@
 package com.example.data
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.example.model.*
 
 object NexfarRepository {
@@ -8,25 +12,25 @@ object NexfarRepository {
     val organizations = listOf(
         Organization(
             id = "org_1",
-            name = "Farmácia São Paulo — Matriz",
-            cnpj = "12.345.678/0001-90",
+            name = "Minha Drogaria / Estabelecimento",
+            cnpj = "00.000.000/0001-00",
             planId = "enterprise",
-            planName = "Plano Estabelecimento (Rede)",
-            activeMembersCount = 8,
+            planName = "Plano Estabelecimento",
+            activeMembersCount = 1,
             city = "São Paulo, SP"
         ),
         Organization(
             id = "org_2",
-            name = "Drogarias FarmaVida — Filial Jardins",
-            cnpj = "98.765.432/0002-11",
+            name = "Farmácia Central — Filial 1",
+            cnpj = "12.345.678/0001-90",
             planId = "enterprise",
-            planName = "Plano Estabelecimento",
+            planName = "Plano Estabelecimento (Rede)",
             activeMembersCount = 5,
             city = "Campinas, SP"
         ),
         Organization(
             id = "org_3",
-            name = "Consultório Dr. Walex Ferreira (Autônomo)",
+            name = "Consultório Clínico Farmacêutico",
             cnpj = "45.123.890/0001-44",
             planId = "professional",
             planName = "Plano Profissional Clínico",
@@ -44,16 +48,115 @@ object NexfarRepository {
         )
     )
 
-    val currentUser = UserProfile(
-        id = "usr_001",
-        name = "Dr. Walex Ferreira",
-        email = "walex.farmacia@nexfar.com.br",
-        crfNumber = "CRF-SP 48.912/RT",
-        role = UserRole.PHARMACIST_RT,
-        currentOrgId = "org_1"
+    // Dynamic current user with ability to edit, log out, or switch account
+    var currentUser by mutableStateOf(
+        UserProfile(
+            id = "usr_001",
+            name = "Farmacêutico / Atendente",
+            email = "usuario@farmacia.com.br",
+            crfNumber = "CRF a preencher",
+            role = UserRole.PHARMACIST_RT,
+            currentOrgId = "org_1",
+            avatarInitials = "FA"
+        )
     )
 
-    // Complete Brazilian ANVISA Medicines Catalog
+    var isUserLoggedIn by mutableStateOf(false)
+
+    fun loginUser(name: String, email: String, crf: String, orgName: String, role: UserRole) {
+        val initials = name.split(" ")
+            .filter { it.isNotBlank() }
+            .take(2)
+            .map { it.first().uppercaseChar() }
+            .joinToString("")
+            .ifEmpty { "FA" }
+
+        currentUser = UserProfile(
+            id = "usr_${System.currentTimeMillis()}",
+            name = name.ifBlank { "Farmacêutico / Atendente" },
+            email = email.ifBlank { "usuario@farmacia.com.br" },
+            crfNumber = crf.ifBlank { "Não informado" },
+            role = role,
+            currentOrgId = "org_1",
+            avatarInitials = initials
+        )
+        isUserLoggedIn = true
+    }
+
+    fun logoutUser() {
+        isUserLoggedIn = false
+    }
+
+    // Master Access Accounts for Super Admin / SaaS Owner to manage access & plans
+    val accessAccounts = mutableStateListOf(
+        UserAccessAccount(
+            id = "acc_1",
+            userName = "Farmacêutico Responsável (Admin)",
+            email = "admin.farmacia@nexfar.com.br",
+            crfNumber = "CRF Ativo",
+            pharmacyName = "Drogarias FarmaVida",
+            cnpj = "98.765.432/0002-11",
+            planTier = PlanTier.ENTERPRISE,
+            status = "ATIVO",
+            dateRegistered = "28/10/2026"
+        ),
+        UserAccessAccount(
+            id = "acc_2",
+            userName = "Dra. Beatriz Santos",
+            email = "beatriz.farmacia@gmail.com",
+            crfNumber = "CRF-MG 31.420",
+            pharmacyName = "Consultório Clínico Independente",
+            cnpj = "45.123.890/0001-44",
+            planTier = PlanTier.PROFESSIONAL,
+            status = "ATIVO",
+            dateRegistered = "29/10/2026"
+        ),
+        UserAccessAccount(
+            id = "acc_3",
+            userName = "Marcos Vinicius (Balconista)",
+            email = "marcos.atendente@farmasaopaulo.com",
+            crfNumber = "Balconista",
+            pharmacyName = "Farmácia São Paulo Matriz",
+            cnpj = "12.345.678/0001-90",
+            planTier = PlanTier.INDIVIDUAL,
+            status = "PENDENTE_APROVACAO",
+            dateRegistered = "31/10/2026"
+        ),
+        UserAccessAccount(
+            id = "acc_4",
+            userName = "Farmácia Popular Central (Rede)",
+            email = "contato@popularcentral.com.br",
+            crfNumber = "CRF-RJ 19.880",
+            pharmacyName = "Rede Farmácias Popular Central",
+            cnpj = "11.222.333/0001-55",
+            planTier = PlanTier.ENTERPRISE,
+            status = "PENDENTE_APROVACAO",
+            dateRegistered = "31/10/2026"
+        )
+    )
+
+    fun approveAccount(accountId: String, newPlan: PlanTier? = null) {
+        val index = accessAccounts.indexOfFirst { it.id == accountId }
+        if (index != -1) {
+            val acc = accessAccounts[index]
+            accessAccounts[index] = acc.copy(
+                status = "ATIVO",
+                planTier = newPlan ?: acc.planTier
+            )
+        }
+    }
+
+    fun toggleBlockAccount(accountId: String) {
+        val index = accessAccounts.indexOfFirst { it.id == accountId }
+        if (index != -1) {
+            val acc = accessAccounts[index]
+            accessAccounts[index] = acc.copy(
+                status = if (acc.status == "BLOQUEADO") "ATIVO" else "BLOQUEADO"
+            )
+        }
+    }
+
+    // Complete Brazilian ANVISA Medicines Catalog with Prescription Types & Interchangeability
     val medicinesList = listOf(
         Medicine(
             id = "med_1",
@@ -86,7 +189,11 @@ object NexfarRepository {
                 "Receituário de Controle Especial em 2 vias (RDC 20/2011)",
                 "Validade da receita: 10 dias a contar da data de emissão",
                 "Não fracionar ou mastigar o comprimido revestido"
-            )
+            ),
+            prescriptionType = PrescriptionType.RECEITA_CONTROLE_ESPECIAL,
+            referenceBrand = "Clavulin BD",
+            genericName = "Amoxicilina + Clavulanato de Potássio",
+            similarBrands = listOf("Sigma-Clav", "Amplamox-AC", "Novamox 2x", "Clavulan")
         ),
         Medicine(
             id = "med_2",
@@ -118,7 +225,11 @@ object NexfarRepository {
             clinicalWarnings = listOf(
                 "Orientar aferição periódica de Pressão Arterial e monitorar função renal / eletrólitos",
                 "Alerta para idosos sobre risco de hipotensão postural ao levantar"
-            )
+            ),
+            prescriptionType = PrescriptionType.RECEITA_BRANCA_SIMPLES,
+            referenceBrand = "Cozaar",
+            genericName = "Losartana Potássica",
+            similarBrands = listOf("Corus", "Torlos", "Aradois", "Zart")
         ),
         Medicine(
             id = "med_3",
@@ -150,7 +261,11 @@ object NexfarRepository {
             clinicalWarnings = listOf(
                 "Tomar sempre durante ou após a principal refeição noturna",
                 "Não mastigar, partir ou triturar o comprimido XR (liberação prolongada)"
-            )
+            ),
+            prescriptionType = PrescriptionType.RECEITA_BRANCA_SIMPLES,
+            referenceBrand = "Glifage XR",
+            genericName = "Cloridrato de Metformina",
+            similarBrands = listOf("Glicefor", "Dimefor", "Metforix", "Formiglic")
         ),
         Medicine(
             id = "med_4",
@@ -184,7 +299,11 @@ object NexfarRepository {
                 "Notificação de Receita B (Azul) - Portaria SVS/MS nº 344/98",
                 "Retenção de receita obrigatória. Validade de 30 dias no estado de emissão",
                 "Risco de síndrome de abstinência se descontinuado abruptamente"
-            )
+            ),
+            prescriptionType = PrescriptionType.NOTIFICACAO_B_AZUL,
+            referenceBrand = "Rivotril",
+            genericName = "Clonazepam",
+            similarBrands = listOf("Navotrax", "Clopam", "Zepax", "Uni Clonazep")
         ),
         Medicine(
             id = "med_5",
@@ -215,7 +334,11 @@ object NexfarRepository {
             clinicalWarnings = listOf(
                 "Medicamento Isento de Prescrição (MIP), porém com recomendação de uso por curto período",
                 "Orientar paciente a procurar atendimento médico se febre persistir por mais de 3 dias"
-            )
+            ),
+            prescriptionType = PrescriptionType.ISENTO_MIP,
+            referenceBrand = "Novalgina",
+            genericName = "Dipirona Monoidratada",
+            similarBrands = listOf("Anador", "Doralgina", "Dipidor", "Magnopyrol")
         ),
         Medicine(
             id = "med_6",
@@ -243,7 +366,200 @@ object NexfarRepository {
             clinicalWarnings = listOf(
                 "Não mastigar as microesferas de MUPS para preservar a proteção gastro-resistente",
                 "Evitar automedicação contínua sem investigação de sintomas de alarme (perda de peso, disfagia)"
-            )
+            ),
+            prescriptionType = PrescriptionType.RECEITA_BRANCA_SIMPLES,
+            referenceBrand = "Losec Mups",
+            genericName = "Omeprazol Magnésico",
+            similarBrands = listOf("Peprazol", "Gastrium", "Victrix", "Omeprotec")
+        ),
+        Medicine(
+            id = "med_7",
+            tradeName = "Ritalina 10mg",
+            activeIngredient = "Cloridrato de Metilfenidato",
+            concentration = "10 mg",
+            dosageForm = "Comprimido Simples",
+            manufacturer = "Novartis Biociências S.A.",
+            anvisaRegistry = "MS 1.0068.0080.003-1",
+            tarja = MedicineTarja.PRETA,
+            isGeneric = false,
+            pmcPrice = 84.50,
+            approvedIndications = listOf(
+                "Transtorno de Déficit de Atenção e Hiperatividade (TDAH) em crianças > 6 anos e adultos",
+                "Narcolepsia"
+            ),
+            contraindications = listOf(
+                "Ansiedade grave, tensão e agitação",
+                "Glaucoma, hipertireoidismo e arritmias cardíacas graves",
+                "Uso concomitante com inibidores da MAO (risco de crise hipertensiva fatal)"
+            ),
+            adverseReactions = listOf("Insônia e nervosismo", "Diminuição do apetite e perda de peso", "Taquicardia e palpitações"),
+            majorInteractions = listOf(
+                "IMAO: crise hipertensiva grave (aguardar 14 dias)",
+                "Anti-hipertensivos: metilfenidato pode reduzir a eficácia anti-hipertensiva"
+            ),
+            posologyApproved = "Iniciar com 5 mg a 10 mg 1 a 2 vezes ao dia (ao café da manhã e almoço). Dose máxima de 60 mg/dia.",
+            clinicalWarnings = listOf(
+                "Notificação de Receita A (Amarela) - Portaria SVS/MS 344/98 Lista A3",
+                "Retenção obrigatória da notificação amarela e receita médica acompanhante",
+                "Validade: 30 dias contados a partir da data de emissão em todo o território nacional"
+            ),
+            prescriptionType = PrescriptionType.NOTIFICACAO_A_AMARELA,
+            referenceBrand = "Ritalina",
+            genericName = "Cloridrato de Metilfenidato",
+            similarBrands = listOf("Concerta", "Attenze", "Ragione")
+        ),
+        Medicine(
+            id = "med_8",
+            tradeName = "Tylenol 750mg",
+            activeIngredient = "Paracetamol",
+            concentration = "750 mg",
+            dosageForm = "Comprimido Revestido",
+            manufacturer = "Kenvue / Johnson & Johnson",
+            anvisaRegistry = "MS 1.5721.1214.001-9",
+            tarja = MedicineTarja.LIVRE,
+            isGeneric = false,
+            pmcPrice = 29.90,
+            approvedIndications = listOf(
+                "Redução da febre e alívio temporário de dores leves a moderadas (cefaléia, mialgia, odontalgia)",
+                "Analgésico seguro de primeira linha para gestantes e lactantes"
+            ),
+            contraindications = listOf("Hipersensibilidade ao paracetamol ou hepatopatia ativa grave"),
+            adverseReactions = listOf("Raras reações cutâneas", "Hepatotoxicidade em superdosagem aguda (> 4g/dia)"),
+            majorInteractions = listOf("Álcool: potencialização do metabólito hepatotóxico NAPQI", "Varfarina: monitorar se uso crônico"),
+            posologyApproved = "Adultos: 1 comprimido de 750 mg a cada 6 ou 8 horas. Nunca exceder 4.000 mg (4g) em 24 horas.",
+            clinicalWarnings = listOf(
+                "Medicamento Isento de Prescrição (MIP)",
+                "Alerta contra uso associado a outros antigripais contendo paracetamol oculto"
+            ),
+            prescriptionType = PrescriptionType.ISENTO_MIP,
+            referenceBrand = "Tylenol",
+            genericName = "Paracetamol",
+            similarBrands = listOf("Tyflen", "Parador", "Pacemol", "Termus")
+        )
+    )
+
+    // Complete Interchangeability Catalog (Guia de Balcão: Ético vs Genérico vs Similar)
+    val interchangeableDrugsList = listOf(
+        InterchangeableDrug(
+            id = "int_1",
+            activeIngredient = "Amoxicilina + Clavulanato de Potássio",
+            therapeuticClass = "Antibacteriano Betalactâmico com Inibidor de Betalactamase",
+            referenceBrand = "Clavulin / Clavulin BD",
+            genericName = "Amoxicilina + Clavulanato de Potássio (Genérico)",
+            similarBrands = listOf("Sigma-Clav", "Amplamox-AC", "Novamox 2x", "Clavulan"),
+            prescriptionType = PrescriptionType.RECEITA_CONTROLE_ESPECIAL,
+            tarja = MedicineTarja.VERMELHA_RETENCAO,
+            clinicalTip = "Receita em 2 vias branca (RDC 20/2011). Validade de 10 dias. Pode substituir o Ético pelo Genérico ou pelo Similar Equivalente (EQ)."
+        ),
+        InterchangeableDrug(
+            id = "int_2",
+            activeIngredient = "Dipirona Monoidratada",
+            therapeuticClass = "Analgésico e Antipirético Pirazolônico",
+            referenceBrand = "Novalgina",
+            genericName = "Dipirona Monoidratada (Genérico)",
+            similarBrands = listOf("Anador", "Doralgina", "Dipidor", "Magnopyrol"),
+            prescriptionType = PrescriptionType.ISENTO_MIP,
+            tarja = MedicineTarja.LIVRE,
+            clinicalTip = "MIP (Venda Livre). Não necessita de receita médica. Contraindicada para pacientes com deficiência de G6PD ou porfiria."
+        ),
+        InterchangeableDrug(
+            id = "int_3",
+            activeIngredient = "Cloridrato de Metformina",
+            therapeuticClass = "Antidiabético Biguanida",
+            referenceBrand = "Glifage / Glifage XR",
+            genericName = "Cloridrato de Metformina (Genérico)",
+            similarBrands = listOf("Glicefor", "Dimefor", "Metforix", "Formiglic"),
+            prescriptionType = PrescriptionType.RECEITA_BRANCA_SIMPLES,
+            tarja = MedicineTarja.VERMELHA_SEM_RETENCAO,
+            clinicalTip = "Receita Branca Comum. Versão XR (liberação prolongada) não pode ser partida ou mastigada. Tomar sempre com o jantar."
+        ),
+        InterchangeableDrug(
+            id = "int_4",
+            activeIngredient = "Clonazepam",
+            therapeuticClass = "Ansiolítico e Anticonvulsivante Benzodiazepínico (Lista B1)",
+            referenceBrand = "Rivotril",
+            genericName = "Clonazepam (Genérico)",
+            similarBrands = listOf("Navotrax", "Clopam", "Zepax", "Uni Clonazep"),
+            prescriptionType = PrescriptionType.NOTIFICACAO_B_AZUL,
+            tarja = MedicineTarja.PRETA,
+            clinicalTip = "Notificação de Receita B (Azul) com validade de 30 dias. Retenção obrigatória da notificação no balcão e registro no SNGPC."
+        ),
+        InterchangeableDrug(
+            id = "int_5",
+            activeIngredient = "Losartana Potássica",
+            therapeuticClass = "Anti-hipertensivo Bloqueador do Receptor de Angiotensina II (BRA)",
+            referenceBrand = "Cozaar",
+            genericName = "Losartana Potássica (Genérico)",
+            similarBrands = listOf("Corus", "Torlos", "Aradois", "Zart"),
+            prescriptionType = PrescriptionType.RECEITA_BRANCA_SIMPLES,
+            tarja = MedicineTarja.VERMELHA_SEM_RETENCAO,
+            clinicalTip = "Receita Branca Comum. Não associar com poupadores de potássio ou suplementos sem monitoramento de eletrólitos."
+        ),
+        InterchangeableDrug(
+            id = "int_6",
+            activeIngredient = "Omeprazol Magnésico",
+            therapeuticClass = "Antiulceroso Inibidor da Bomba de Prótons (IBP)",
+            referenceBrand = "Losec Mups",
+            genericName = "Omeprazol (Genérico)",
+            similarBrands = listOf("Peprazol", "Gastrium", "Victrix", "Omeprotec"),
+            prescriptionType = PrescriptionType.RECEITA_BRANCA_SIMPLES,
+            tarja = MedicineTarja.VERMELHA_SEM_RETENCAO,
+            clinicalTip = "Tomar em jejum pela manhã, 30 min antes do café. Não mastigar as microesferas."
+        ),
+        InterchangeableDrug(
+            id = "int_7",
+            activeIngredient = "Cloridrato de Metilfenidato",
+            therapeuticClass = "Psicoestimulante do SNC (Lista A3 - Entorpecentes/Psicotrópicos)",
+            referenceBrand = "Ritalina / Concerta",
+            genericName = "Cloridrato de Metilfenidato (Genérico)",
+            similarBrands = listOf("Concerta", "Attenze", "Ragione"),
+            prescriptionType = PrescriptionType.NOTIFICACAO_A_AMARELA,
+            tarja = MedicineTarja.PRETA,
+            clinicalTip = "Notificação de Receita A (Amarela) oficial. Validade nacional de 30 dias. Exige controle rígido de estoque no SNGPC."
+        ),
+        InterchangeableDrug(
+            id = "int_8",
+            activeIngredient = "Paracetamol",
+            therapeuticClass = "Analgésico e Antipirético não opiáceo",
+            referenceBrand = "Tylenol",
+            genericName = "Paracetamol (Genérico)",
+            similarBrands = listOf("Tyflen", "Parador", "Pacemol", "Termus"),
+            prescriptionType = PrescriptionType.ISENTO_MIP,
+            tarja = MedicineTarja.LIVRE,
+            clinicalTip = "MIP (Venda Livre). Seguro para gestantes (Categoria B). Alerta de dose máxima diária de 4.000 mg."
+        ),
+        InterchangeableDrug(
+            id = "int_9",
+            activeIngredient = "Cloridrato de Fluoxetina",
+            therapeuticClass = "Antidepressivo Inibidor Seletivo da Recaptação de Serotonina (ISRS - C1)",
+            referenceBrand = "Prozac",
+            genericName = "Cloridrato de Fluoxetina (Genérico)",
+            similarBrands = listOf("Daforin", "Verotina", "Fluxene", "Depress"),
+            prescriptionType = PrescriptionType.RECEITA_CONTROLE_ESPECIAL,
+            tarja = MedicineTarja.VERMELHA_RETENCAO,
+            clinicalTip = "Receita Branca de Controle Especial em 2 vias (Portaria 344/98 Lista C1). Validade de 30 dias."
+        ),
+        InterchangeableDrug(
+            id = "int_10",
+            activeIngredient = "Atorvastatina Cálcica",
+            therapeuticClass = "Hipolipemiante Inibidor da HMG-CoA Redutase",
+            referenceBrand = "Lipitor",
+            genericName = "Atorvastatina Cálcica (Genérico)",
+            similarBrands = listOf("Citalor", "Plavom", "Zirter", "Torvast"),
+            prescriptionType = PrescriptionType.RECEITA_BRANCA_SIMPLES,
+            tarja = MedicineTarja.VERMELHA_SEM_RETENCAO,
+            clinicalTip = "Receita Branca Comum. Tomar à noite. Orientar relato imediato de mialgias ou dores musculares intensas."
+        ),
+        InterchangeableDrug(
+            id = "int_11",
+            activeIngredient = "Ibuprofeno",
+            therapeuticClass = "Anti-inflamatório Não Esteroidal (AINE)",
+            referenceBrand = "Alivium / Advil",
+            genericName = "Ibuprofeno (Genérico)",
+            similarBrands = listOf("Advil", "Alivium", "Buscofem", "Dalsy"),
+            prescriptionType = PrescriptionType.ISENTO_MIP,
+            tarja = MedicineTarja.LIVRE,
+            clinicalTip = "Dosagens até 400mg são MIP. Dosagens de 600mg são tarja vermelha com receita simples. Ingerir com alimentos."
         )
     )
 
@@ -256,8 +572,6 @@ object NexfarRepository {
     }
 
     fun calculateDilution(c1: Double, v1: Double, c2: Double, v2: Double): Double? {
-        // C1 * V1 = C2 * V2
-        // Return missing value depending on which is 0
         return when {
             v2 == 0.0 && c2 > 0 -> (c1 * v1) / c2
             c2 == 0.0 && v2 > 0 -> (c1 * v1) / v2
@@ -489,54 +803,26 @@ object NexfarRepository {
     val demoPatients = mutableListOf(
         PatientRecord(
             id = "pat_rec_1",
-            name = "Dona Maria Helena Silva",
-            age = 64,
-            systolicBP = 138,
-            diastolicBP = 88,
-            bloodGlucose = 112,
-            weightKg = 68.5,
-            heightCm = 158,
-            continuousMedicines = listOf("Losartana Potássica 50mg (1x ao dia)", "Hidroclorotiazida 25mg (1x pela manhã)", "Metformina XR 500mg (1x ao jantar)"),
-            notes = "Paciente refere boa adesão. Orientada quanto a hidratação e evitar ingestão excessiva de sódio. Pressão em redução favorável.",
-            lastVisitDate = "28/10/2026",
-            statusBadge = "Hipertensão Controlada"
-        ),
-        PatientRecord(
-            id = "pat_rec_2",
-            name = "Sr. Antônio Carlos de Souza",
-            age = 71,
-            systolicBP = 162,
-            diastolicBP = 98,
-            bloodGlucose = 186,
-            weightKg = 84.0,
-            heightCm = 172,
-            continuousMedicines = listOf("Enalapril 20mg (2x ao dia)", "Glibenclamida 5mg (1x ao café)", "AAS 100mg"),
-            notes = "ALERTA: Pressão Estágio 2 e glicemia elevada. Relatou esquecimento frequente de doses nos fins de semana. Orientado sobre risco e agendado retorno com médico assistente.",
-            lastVisitDate = "25/10/2026",
-            statusBadge = "Requer Atenção Clínica"
-        ),
-        PatientRecord(
-            id = "pat_rec_3",
-            name = "Juliana Mendes Paiva",
-            age = 32,
-            systolicBP = 115,
-            diastolicBP = 75,
-            bloodGlucose = 88,
-            weightKg = 59.0,
-            heightCm = 165,
-            continuousMedicines = listOf("Fluoxetina 20mg (1x pela manhã)"),
-            notes = "Avaliação de rotina. Nenhuma queixa de interação ou sonolência. Parâmetros hemodinâmicos e metabólicos excelentes.",
-            lastVisitDate = "22/10/2026",
-            statusBadge = "Parâmetros Normais"
+            name = "Paciente Acompanhamento Exemplo",
+            age = 58,
+            systolicBP = 130,
+            diastolicBP = 85,
+            bloodGlucose = 105,
+            weightKg = 70.0,
+            heightCm = 168,
+            continuousMedicines = listOf("Losartana Potássica 50mg (1x ao dia)", "Metformina XR 500mg (1x ao jantar)"),
+            notes = "Prontuário pronto para registro de consultas reais da farmácia.",
+            lastVisitDate = "31/10/2026",
+            statusBadge = "Parâmetros Estáveis"
         )
     )
 
-    // AI Assistant preset conversations & clinical logic
+    // AI Assistant preset conversations
     val initialChatMessages = listOf(
         ChatMessage(
             id = "msg_1",
             isUser = false,
-            messageText = "Olá, Dr. Walex! Sou o assistente farmacêutico clínico da NEXFAR. Como posso auxiliar na sua tomada de decisão hoje?",
+            messageText = "Olá! Sou o assistente clínico da NEXFAR. Digite qualquer medicamento, princípio ativo, dosagem, interação ou dúvida regulatória ANVISA para receber a análise imediata.",
             technicalSummary = "Módulo de apoio à decisão clínica e verificação de interações medicamentosas ativo.",
             citations = listOf("ANVISA Bulário Eletrônico", "Farmacopeia Brasileira 6ª Ed.", "Micromedex Solutions")
         )
@@ -546,73 +832,286 @@ object NexfarRepository {
     val adminMetrics = SaaSAdminMetrics()
 
     val auditLogs = listOf(
-        AuditLogEntry("log_1", "Alteração de Plano da Farmácia Jardins para Enterprise", "Admin SaaS (walex@nexfar.com.br)", "NEXFAR SaaS", "Há 12 min"),
-        AuditLogEntry("log_2", "Dispensação de Antimicrobiano escriturada no SNGPC", "Farmacêutico RT - CRF 48.912", "Farmácia São Paulo", "Há 34 min"),
-        AuditLogEntry("log_3", "Novo paciente cadastrado no Caderno de Atenção", "Atendente Lucas R.", "Drogarias FarmaVida", "Há 1 hora"),
-        AuditLogEntry("log_4", "Atualização de Bula ANVISA sincronizada (Clavulin)", "Sistema Automático Nexfar Bot", "Global", "Há 3 horas")
+        AuditLogEntry("log_1", "Novo usuário cadastrado na plataforma", "Sistema Automático", "NEXFAR SaaS", "Há 5 min"),
+        AuditLogEntry("log_2", "Dispensação de Antimicrobiano escriturada no SNGPC", "Farmacêutico RT", "Minha Drogaria", "Há 22 min"),
+        AuditLogEntry("log_3", "Acesso ao Bulário ANVISA sincronizado", "Atendente de Balcão", "Minha Drogaria", "Há 40 min")
     )
 
+    // Robust, dynamic clinical AI reasoning engine
     fun generateClinicalAIResponse(prompt: String): ChatMessage {
-        val lower = prompt.lowercase()
+        val lower = prompt.lowercase().trim()
+
         return when {
-            lower.contains("fluoxetina") && lower.contains("tramadol") -> {
+            // Interação Fluoxetina + Tramadol
+            (lower.contains("fluoxetina") && lower.contains("tramadol")) || (lower.contains("tramadol") && lower.contains("serotonin")) -> {
                 ChatMessage(
                     id = "resp_${System.currentTimeMillis()}",
                     isUser = false,
                     messageText = "A associação entre Fluoxetina e Tramadol apresenta risco clinicamente significativo de Síndrome Serotoninérgica grave e redução do limiar convulsivo.",
-                    technicalSummary = "INTERAÇÃO GRAVE / CONTRAINDICAÇÃO RELATIVA: A fluoxetina é um potente inibidor da isoenzima CYP2D6 e potencializa a transmissão serotoninérgica no SNC.",
-                    mechanismOfAction = "1. Inibição Farmacocinética: O tramadol é um pró-fármaco que depende da CYP2D6 para conversão no metabólito M1 (ativo, 300x mais potente na afinidade ao receptor mu-opioide). A inibição pela fluoxetina reduz a eficácia analgésica.\n2. Sinergismo Farmacodinâmico: Ambos bloqueiam a recaptação neuronal de serotonina (5-HT), precipitando acúmulo sináptico excessivo.",
+                    technicalSummary = "INTERAÇÃO GRAVE / CONTRAINDICAÇÃO RELATIVA: A fluoxetina inibe potentemente a isoenzima CYP2D6 e eleva a transmissão serotoninérgica no SNC.",
+                    mechanismOfAction = "1. Inibição Farmacocinética: O tramadol é um pró-fármaco que depende da CYP2D6 para conversão no metabólito M1 (ativo, 300x mais potente na afinidade ao receptor mu-opioide). A inibição pela fluoxetina reduz a eficácia analgésica.\n2. Sinergismo Farmacodinâmico: Ambos bloqueiam a recaptação de serotonina (5-HT), precipitando acúmulo sináptico excessivo.",
                     safetyAlerts = listOf(
                         "Alerta de Síndrome Serotoninérgica: hipertermia, clônus, agitação, tremor, diaforese",
                         "Risco aumentado de convulsões, especialmente em idosos ou histórico epiléptico",
-                        "Conduta: Recomenda-se evitar a associação ou substituir por analgésico de mecanismo alternativo sob supervisão médica"
+                        "Conduta: Recomenda-se evitar a associação ou substituir por analgésico de mecanismo alternativo sob supervisão médica",
+                        "Receituário: Ambos exigem Receita de Controle Especial em 2 vias (Portaria 344/98 Lista C1 e A2)"
                     ),
                     citations = listOf("ANVISA - Farmacovigilância", "Lexicomp Drug Information", "FDA Black Box Warnings")
                 )
             }
-            lower.contains("ciprofloxacino") && (lower.contains("idoso") || lower.contains("renal")) -> {
+
+            // Quinolonas / Ciprofloxacino
+            lower.contains("ciprofloxacino") || lower.contains("levofloxacino") || lower.contains("quinolona") -> {
                 ChatMessage(
                     id = "resp_${System.currentTimeMillis()}",
                     isUser = false,
-                    messageText = "O uso de Ciprofloxacino em pacientes idosos requer ajuste rigoroso pela função renal (Clearance de Creatinina) e monitoramento de segurança musculoesquelética.",
-                    technicalSummary = "ALERTA GERIÁTRICO & AJUSTE RENAL: As quinolonas apresentam excreção predominantemente renal (40-50% inalterada na urina).",
-                    mechanismOfAction = "Em idosos com ClCr < 50 mL/min, a meia-vida sérica é prolongada consideravelmente. Além disso, há risco elevado de tendinite e ruptura do tendão de Aquiles potencializado pelo uso concomitante de corticosteroides.",
+                    messageText = "Análise Clínica de Fluoroquinolonas (Ciprofloxacino / Levofloxacino): Exige ajuste renal estrito e cautela musculoesquelética.",
+                    technicalSummary = "ANTIBIÓTICO BACTERICIDA (Inibidor de DNA-girase e Topoisomerase IV). Excreção predominantemente renal.",
+                    mechanismOfAction = "Inibe a replicação e transcrição do DNA bacteriano. Apresenta alta biodisponibilidade oral, porém quela fortemente com cátions divalentes e trivalentes (Cálcio, Ferro, Antiácidos com Magnésio/Alumínio), reduzindo absorção em até 85%.",
                     safetyAlerts = listOf(
-                        "Se ClCr 30-50 mL/min: administrar 250 a 500 mg a cada 12 horas",
-                        "Se ClCr < 30 mL/min: administrar 250 a 500 mg a cada 18 ou 24 horas",
-                        "Manter hidratação adequada para prevenir cristalúria em pH urinário alcalino"
+                        "Ajuste Renal: Se ClCr 30-50 mL/min, administrar a cada 12h; se ClCr < 30 mL/min, a cada 18-24h",
+                        "Alerta ANVISA/FDA: Risco de tendinite e ruptura do tendão de Aquiles, especialmente em idosos (> 60 anos) e usuários de corticosteroides",
+                        "Espaçar em pelo menos 2 a 4 horas a ingestão de leite, derivados ou suplementos de cálcio/ferro",
+                        "Receituário obrigatório: Receita de Controle Especial em 2 vias (RDC 20/2011, validade 10 dias)"
                     ),
-                    citations = listOf("Diretrizes de Terapêutica Antimicrobiana Sanford Guide", "Bula Oficial ANVISA Ciprofloxacino")
+                    citations = listOf("Sanford Guide de Terapêutica Antimicrobiana", "ANVISA RDC 20/2011", "Bulário Eletrônico")
                 )
             }
-            lower.contains("dipirona") || lower.contains("paracetamol") -> {
+
+            // Amoxicilina / Betalactâmicos / Clavulin
+            lower.contains("amoxicilina") || lower.contains("clavulin") || lower.contains("penicilina") || lower.contains("sinusite") || lower.contains("otite") -> {
                 ChatMessage(
                     id = "resp_${System.currentTimeMillis()}",
                     isUser = false,
-                    messageText = "Diferenças Farmacológicas e de Segurança entre Dipirona Sódica e Paracetamol no Balcão:",
-                    technicalSummary = "COMPARAÇÃO CLÍNICA: Dipirona é pirazolona com ação analgésica, antipirética e espasmolítica suave. Paracetamol é derivado do p-aminofenol com ação central.",
-                    mechanismOfAction = "- Dipirona: Inibição de COX central e periférica, além de ação sobre canais de potássio dependentes de ATP. Excelente para dores cólicas e febre alta.\n- Paracetamol: Inibição seletiva de COX no SNC com mínima ação anti-inflamatória periférica. Medicamento de primeira escolha para gestantes (Categoria B).",
+                    messageText = "Análise Clínica de Amoxicilina e Amoxicilina + Clavulanato: Betalactâmico de amplo espectro para infecções respiratórias e otorrinolaringológicas.",
+                    technicalSummary = "ANTIBIÓTICO BACTERICIDA. O clavulanato de potássio atua como inibidor 'suicida' de betalactamases, restaurando a sensibilidade contra cepas produtoras de enzimas.",
+                    mechanismOfAction = "Inibe a síntese da parede celular bacteriana por ligação às PBPs (Penicillin-Binding Proteins). Meia-vida de eliminação de 1 a 1,5 horas com excreção renal ativa.",
                     safetyAlerts = listOf(
-                        "Dipirona: risco raro de agranulocitose idiopática; contraindicada em porfiria e deficiência de G6PD",
-                        "Paracetamol: dose máxima estrita de 4.000 mg/dia em adultos (3.000 mg em hepatopatas) para evitar necrose hepática por NAPQI",
-                        "Orientar nunca combinar múltiplos antigripais contendo paracetamol oculto"
+                        "Contraindicação absoluta: histórico de anafilaxia ou choque por penicilinas e cefalosporinas",
+                        "Tomar preferencialmente no início de refeições para minimizar náuseas e diarreia osmótica",
+                        "Não interromper o tratamento antes do prazo estipulado pelo médico para evitar resistência bacteriana",
+                        "Receituário: Receita de Controle Especial em 2 vias brancas (RDC 20/2011). Validade: 10 dias corridos da emissão"
                     ),
-                    citations = listOf("Farmacopeia Brasileira", "Conselho Federal de Farmácia (CFF) - Linha de Cuidado da Dor")
+                    citations = listOf("ANVISA - RDC 20/2011", "Diretrizes Brasileiras de Rinossinusite", "Farmacopeia Brasileira")
                 )
             }
+
+            // Azitromicina / Macrolídeos
+            lower.contains("azitromicina") || lower.contains("claritromicina") || lower.contains("macrolideo") -> {
+                ChatMessage(
+                    id = "resp_${System.currentTimeMillis()}",
+                    isUser = false,
+                    messageText = "Análise Clínica de Azitromicina (Macrolídeo azalídeo): Ação bacteriostática com meia-vida tecidual extremamente prolongada (até 68 horas).",
+                    technicalSummary = "ANTIBIÓTICO MACROLÍDEO. Excelente penetração intracelular em macrófagos e fibroblastos, permitindo posologias curtas de 3 a 5 dias.",
+                    mechanismOfAction = "Liga-se reversivelmente à subunidade 50S do ribossomo bacteriano, inibindo a transpeptidação e a síntese proteica celular.",
+                    safetyAlerts = listOf(
+                        "Alerta Cardíaco ANVISA/FDA: Risco de prolongamento do intervalo QT e arritmia ventricular (Torsades de Pointes) em pacientes cardiopatas",
+                        "Tomar 1 hora antes ou 2 horas após refeições ricas para garantir absorção estável",
+                        "Receituário obrigatório: Receita de Controle Especial em 2 vias (RDC 20/2011). Validade: 10 dias"
+                    ),
+                    citations = listOf("ANVISA - Alerta de Farmacovigilância QT", "Goodman & Gilman 13ª Ed.")
+                )
+            }
+
+            // Dipirona vs Paracetamol / Analgésicos
+            lower.contains("dipirona") || lower.contains("paracetamol") || lower.contains("novalgina") || lower.contains("tylenol") -> {
+                ChatMessage(
+                    id = "resp_${System.currentTimeMillis()}",
+                    isUser = false,
+                    messageText = "Análise Diferencial: Dipirona Monoidratada vs. Paracetamol na Prática de Balcão:",
+                    technicalSummary = "ANALGÉSICOS E ANTIPIRÉTICOS ISENTOS DE PRESCRIÇÃO (MIP). Ação central e espasmolítica comparada.",
+                    mechanismOfAction = "- Dipirona: Ação periférica e central inibindo COX-1, COX-2 e COX-3, além de abertura de canais de K+ dependentes de ATP no músculo liso (efeito antiespasmódico em cólicas).\n- Paracetamol: Inibição de COX no SNC com ação antipirética hipotalâmica; quase desprovido de ação anti-inflamatória periférica.",
+                    safetyAlerts = listOf(
+                        "Paracetamol: Limite máximo estrito de 4.000 mg/dia em adultos (3.000 mg em idosos/hepatopatas) devido à saturação de glutationa e acúmulo de NAPQI hepatotóxico",
+                        "Paracetamol é medicamento de primeira escolha e seguro na gestação (Categoria B)",
+                        "Dipirona: rara ocorrência de agranulocitose idiopática; contraindicada em porfiria e deficiência de G6PD",
+                        "Classificação regulatória: Isentos de Prescrição (MIP), venda livre orientada pelo farmacêutico"
+                    ),
+                    citations = listOf("Farmacopeia Brasileira 6ª Ed.", "Conselho Federal de Farmácia (CFF) - Linha de Cuidado da Dor")
+                )
+            }
+
+            // AINEs / Ibuprofeno / Diclofenaco / Nimesulida / Cetoprofeno
+            lower.contains("ibuprofeno") || lower.contains("diclofenaco") || lower.contains("nimesulida") || lower.contains("cetoprofeno") || lower.contains("aine") -> {
+                ChatMessage(
+                    id = "resp_${System.currentTimeMillis()}",
+                    isUser = false,
+                    messageText = "Análise Clínica de Anti-inflamatórios Não Esteroidais (AINEs): Riscos renais, gastrointestinais e cardiovasculares.",
+                    technicalSummary = "ANTI-INFLAMATÓRIO, ANALGÉSICO E ANTIPIRÉTICO. Inibição da enzima Ciclo-oxigenase (COX-1 constitutiva e/ou COX-2 induzível).",
+                    mechanismOfAction = "Bloqueia a conversão do ácido araquidônico em prostaglandinas inflamatórias. A inibição de COX-1 na mucosa gástrica reduz PGE2 e PGI2 protetoras, aumentando secreção ácida.",
+                    safetyAlerts = listOf(
+                        "Gastrolesividade: Risco de gastrite, úlcera péptica e sangramento digestivo. Ingerir sempre com alimentos e avaliar protetor gástrico (IBP)",
+                        "Nefrotoxicidade: Bloqueiam a vasodilatação da arteríola aferente mediada por prostaglandinas, podendo precipitar Lesão Renal Aguda em idosos desidratados",
+                        "Interação Crítica: AINEs atenuam o efeito de todos os anti-hipertensivos (IECA, BRA, diuréticos) e aumentam a PA sistólica em 3 a 5 mmHg",
+                        "Nimesulida: Contraindicada em menores de 12 anos e limitada a 7 dias pelo risco de hepatotoxicidade aguda grave (Alerta ANVISA)"
+                    ),
+                    citations = listOf("ANVISA - Alertas de Segurança com AINEs", "Diretrizes Brasileiras de Hipertensão 2020")
+                )
+            }
+
+            // Losartana / Hipertensão / Enalapril / Anti-hipertensivos
+            lower.contains("losartana") || lower.contains("enalapril") || lower.contains("captopril") || lower.contains("anlodipino") || lower.contains("pressao") || lower.contains("hipertens") -> {
+                ChatMessage(
+                    id = "resp_${System.currentTimeMillis()}",
+                    isUser = false,
+                    messageText = "Conduta Farmacêutica em Anti-hipertensivos (Bloqueadores SRAA / Bloqueadores de Cálcio):",
+                    technicalSummary = "FÁRMACOS DE PRIMEIRA LINHA PARA HIPERTENSÃO ARTERIAL SISTÊMICA (HAS). Cardioproteção e nefroproteção comprovadas.",
+                    mechanismOfAction = "- Losartana (BRA): Bloqueia seletivamente os receptores AT1 da angiotensina II, impedindo vasoconstrição e secreção de aldosterona.\n- Enalapril (IECA): Inibe a conversão de angiotensina I em angiotensina II e inibe a degradação de bradicinina (pode causar tosse seca em 10-15%).\n- Anlodipino: Bloqueador de canais de cálcio di-hidropiridínico que causa vasodilatação periférica (alerta de edema maleolar).",
+                    safetyAlerts = listOf(
+                        "Contraindicação estrita: Gravidez (Categoria D - risco de malformações renais fetais e oligoidrâmnio)",
+                        "Monitorar eletrólitos séricos (risco de hipercalemia, especialmente com diuréticos poupadores de potássio)",
+                        "Alerta para idosos: Hipotensão ortostática ao se levantar rapidamente da cama ou cadeira",
+                        "Receituário: Receita Branca Comum em 1 via simples (Sob Prescrição Médica)"
+                    ),
+                    citations = listOf("Diretrizes Brasileiras de Hipertensão Arterial - SBC/SBH 2020", "Bula Oficial ANVISA")
+                )
+            }
+
+            // Metformina / Diabetes / Glifage / Glicemia / Insulina
+            lower.contains("metformina") || lower.contains("glifage") || lower.contains("diabetes") || lower.contains("glicemia") || lower.contains("insulina") -> {
+                ChatMessage(
+                    id = "resp_${System.currentTimeMillis()}",
+                    isUser = false,
+                    messageText = "Manejo Farmacêutico do Diabetes Mellitus Tipo 2 & Cloridrato de Metformina:",
+                    technicalSummary = "HIPOGLICEMIANTE ORAL (BIGUANIDA). Pilar farmacológico de primeira escolha no DM2 com benefício cardioprotetor e ausência de ganho de peso.",
+                    mechanismOfAction = "Ativa a proteína quinase ativada por AMP (AMPK), reduzindo a gliconeogênese hepática em até 30% e aumentando a captação periférica de glicose no músculo esquelético.",
+                    safetyAlerts = listOf(
+                        "Função Renal: Monitorar Clearance de Creatinina. Contraindicada se ClCr < 30 mL/min devido ao risco de acidose láctica potencialmente fatal",
+                        "Procedimentos com Contraste Iodado: Suspender a metformina 48 horas antes de exames radiológicos contrastados",
+                        "Efeitos GI: Sabor metálico, náuseas e diarreia são comuns no início; orientar início com doses baixas e tomar sempre junto com o jantar",
+                        "Comprimidos XR (Liberação Prolongada): Nunca partir, mastigar ou triturar o comprimido",
+                        "Receituário: Receita Branca Comum em 1 via simples"
+                    ),
+                    citations = listOf("Diretrizes da Sociedade Brasileira de Diabetes (SBD 2023-2024)", "ADA Standards of Care")
+                )
+            }
+
+            // Clonazepam / Rivotril / Benzodiazepínicos / Diazepam / Zolpidem
+            lower.contains("clonazepam") || lower.contains("rivotril") || lower.contains("diazepam") || lower.contains("alprazolam") || lower.contains("zolpidem") || lower.contains("ansiedade") -> {
+                ChatMessage(
+                    id = "resp_${System.currentTimeMillis()}",
+                    isUser = false,
+                    messageText = "Controle Farmacêutico & Regulatório de Psicotrópicos Benzodiazepínicos (Portaria SVS/MS nº 344/98):",
+                    technicalSummary = "MODULADORES ALOSTÉRICOS POSITIVOS DO RECEPTOR GABA-A. Ação ansiolítica, sedativa, miorrelaxante e anticonvulsivante.",
+                    mechanismOfAction = "Aumentam a frequência de abertura dos canais de cloreto acoplados ao GABA, hiperpolarizando a membrana neuronal e diminuindo a excitabilidade do SNC.",
+                    safetyAlerts = listOf(
+                        "Receituário Obrigatório: Notificação de Receita B de cor AZUL (Lista B1 da Portaria 344/98)",
+                        "Validade da Notificação: 30 dias contados da data de emissão no estado emissor (quantidade para no máximo 60 dias de tratamento)",
+                        "Retenção de Receita e Escrituração obrigatória no SNGPC da drogaria",
+                        "Alerta de Segurança: Tolerância e dependência física/psíquica em uso contínuo > 4 semanas. Nunca descontinuar abruptamente (risco de convulsões de rebote)",
+                        "Interação Crítica: Associação com álcool ou opioides causa sedação profunda e depressão respiratória fatal (Black Box Warning)"
+                    ),
+                    citations = listOf("Portaria SVS/MS nº 344/1998", "ANVISA - Guia Prático de Dispensação de Controlados", "Lexicomp")
+                )
+            }
+
+            // Metilfenidato / Ritalina / Entorpecentes / Amarela
+            lower.contains("metilfenidato") || lower.contains("ritalina") || lower.contains("concerta") || lower.contains("tdah") || lower.contains("amarela") -> {
+                ChatMessage(
+                    id = "resp_${System.currentTimeMillis()}",
+                    isUser = false,
+                    messageText = "Regulação & Farmacologia do Cloridrato de Metilfenidato (Lista A3 - Portaria 344/98):",
+                    technicalSummary = "PSICOESTIMULANTE DO SNC. Tratamento padrão-ouro para TDAH e Narcolepsia. Sujeito a controle especial rigoroso.",
+                    mechanismOfAction = "Bloqueia a recaptação de dopamina e noradrenalina nos terminais sinápticos corticais e subcorticais, aumentando a concentração dessas catecolaminas na fenda sináptica e melhorando a atenção e foco executivo.",
+                    safetyAlerts = listOf(
+                        "Receituário Obrigatório: Notificação de Receita 'A' de cor AMARELA (Lista A3)",
+                        "Validade da Receita: 30 dias em todo o território nacional. Acompanhada obrigatoriamente de receita médica comum",
+                        "Controle no SNGPC: Escrituração diária compulsória com conferência de lote e RG do portador no balcão",
+                        "Efeitos Cardiovasculares: Pode elevar PA e frequência cardíaca; monitorar crianças quanto ao peso e curva de crescimento estatural",
+                        "Contraindicação: Arritmias cardíacas, hipertireoidismo, glaucoma e uso concomitante de IMAO"
+                    ),
+                    citations = listOf("Portaria SVS/MS nº 344/1998, Art. 36", "ANVISA - Bulário Eletrônico", "Diretrizes de TDAH")
+                )
+            }
+
+            // Omeprazol / IBP / Gastrite / Refluxo
+            lower.contains("omeprazol") || lower.contains("pantoprazol") || lower.contains("esomeprazol") || lower.contains("refluxo") || lower.contains("gastrite") -> {
+                ChatMessage(
+                    id = "resp_${System.currentTimeMillis()}",
+                    isUser = false,
+                    messageText = "Orientações Clínicas sobre Inibidores da Bomba de Prótons (IBP - Omeprazol / Pantoprazol):",
+                    technicalSummary = "ANTIULCEROSO PROTETOR GÁSTRICO. Inibidor irreversível da enzima H+/K+-ATPase nas células parietais gástricas.",
+                    mechanismOfAction = "Pró-fármaco que se acumula no canalículo secretor ácido da célula parietal, onde é protonado e se liga covalentemente à H+/K+-ATPase, suprimindo a secreção ácida basal e estimulada em mais de 90%.",
+                    safetyAlerts = listOf(
+                        "Modo de Tomada Correto: Tomar pela manhã em jejum rigoroso, 30 a 60 minutos antes do café da manhã",
+                        "Uso Prolongado (> 1 ano): Risco de hipomagnesemia, déficit de absorção de Vitamina B12 e aumento do risco de fraturas osteoporóticas e infecção por C. difficile",
+                        "Interação Crítica: Omeprazol inibe a CYP2C19 e reduz a bioativação antiplaquetária do Clopidogrel. Em cardiopatas, preferir Pantoprazol",
+                        "Receituário: Receita Branca Comum em 1 via simples"
+                    ),
+                    citations = listOf("Farmacopeia Brasileira", "American College of Gastroenterology (ACG Guidelines)", "ANVISA")
+                )
+            }
+
+            // Corticosteroides / Prednisona / Dexametasona
+            lower.contains("prednisona") || lower.contains("dexametasona") || lower.contains("corticoide") || lower.contains("betametasona") -> {
+                ChatMessage(
+                    id = "resp_${System.currentTimeMillis()}",
+                    isUser = false,
+                    messageText = "Manejo Seguro de Corticosteroides Sistêmicos (Prednisona / Dexametasona) no Balcão:",
+                    technicalSummary = "ANTI-INFLAMATÓRIO E IMUNOSSUPRESSOR GLICOCORTICOIDE. Alta potência na modulação transcricional de citocinas inflamatórias.",
+                    mechanismOfAction = "Liga-se aos receptores citoplasmáticos de glicocorticoides, migra ao núcleo celular e inibe a transcrição de NF-kB e AP-1, bloqueando a síntese de IL-1, IL-6, TNF-alfa e fosfolipase A2.",
+                    safetyAlerts = listOf(
+                        "Horário Fisiológico: Administrar em dose única matinal (entre 7h e 8h) para respeitar o ciclo circadiano do cortisol e minimizar supressão do eixo HPA",
+                        "Desmame Obrigatório: Tratamentos > 14 dias exigem redução gradual de dose para prevenir crise de insuficiência adrenal aguda",
+                        "Efeitos Metabólicos: Elevação da glicemia em diabéticos e retenção hidrossalina com aumento da Pressão Arterial",
+                        "Receituário: Receita Branca Comum em 1 via simples"
+                    ),
+                    citations = listOf("Goodman & Gilman - As Bases Farmacológicas da Terapêutica", "Diretrizes Clínicas ANVISA")
+                )
+            }
+
+            // Estatinas / Sinvastatina / Atorvastatina / Colesterol
+            lower.contains("sinvastatina") || lower.contains("atorvastatina") || lower.contains("rosuvastatina") || lower.contains("colesterol") -> {
+                ChatMessage(
+                    id = "resp_${System.currentTimeMillis()}",
+                    isUser = false,
+                    messageText = "Farmacologia e Segurança das Estatinas (Sinvastatina / Atorvastatina / Rosuvastatina):",
+                    technicalSummary = "HIPOLIPEMIANTE INIBIDOR COMPETITIVO DA HMG-CoA REDUTASE. Redução de LDL-colesterol e estabilização de placas ateroscleróticas.",
+                    mechanismOfAction = "Inibe a enzima limitante da síntese hepática de colesterol, aumentando a expressão dos receptores de LDL na superfície dos hepatócitos e acelerando a depuração plasmática de LDL.",
+                    safetyAlerts = listOf(
+                        "Horário: Sinvastatina tem meia-vida curta (2h) e deve ser tomada à noite (pico da síntese hepática). Atorvastatina e Rosuvastatina têm meia-vida longa (> 14h) e podem ser tomadas em qualquer horário",
+                        "Miopatia e Rabdomiólise: Risco potencializado pela associação com inibidores potentes da CYP3A4 (Claritromicina, Cetoconazol, Suco de Toranja)",
+                        "Orientar paciente a procurar atendimento imediatamente em caso de dor muscular inexplicada, fraqueza ou urina escura",
+                        "Receituário: Receita Branca Comum em 1 via simples"
+                    ),
+                    citations = listOf("Diretrizes Brasileiras de Dislipidemia e Prevenção da Aterosclerose - SBC 2020", "ANVISA")
+                )
+            }
+
+            // Antidepressivos ISRS / Sertralina / Escitalopram
+            lower.contains("sertralina") || lower.contains("escitalopram") || lower.contains("antidepressivo") -> {
+                ChatMessage(
+                    id = "resp_${System.currentTimeMillis()}",
+                    isUser = false,
+                    messageText = "Atenção Farmacêutica em Antidepressivos ISRS (Sertralina / Escitalopram / Citalopram):",
+                    technicalSummary = "INIBIDORES SELETIVOS DA RECAPTAÇÃO DE SEROTONINA (ISRS). Medicamentos de controle especial da Lista C1.",
+                    mechanismOfAction = "Bloqueiam seletivamente a proteína transportadora de serotonina (SERT), prolongando o tempo de permanência da 5-HT na fenda sináptica e induzindo dessensibilização adaptativa de receptores 5-HT1A pré-sinápticos.",
+                    safetyAlerts = listOf(
+                        "Latência Terapêutica: O efeito antidepressivo/ansiolítico pleno leva de 2 a 4 semanas para se consolidar. Orientar paciente a não abandonar o tratamento",
+                        "Sintomas Iniciais: Pode ocorrer náusea passageira e leve piora da ansiedade nos primeiros 5-7 dias",
+                        "Receituário Obrigatório: Receita de Controle Especial em 2 vias brancas (Portaria 344/98 Lista C1). Validade de 30 dias contados da emissão",
+                        "Descontinuação: Deve ser gradual para evitar síndrome de descontinuação (vertigem, choques elétricos na cabeça, insônia)"
+                    ),
+                    citations = listOf("Portaria SVS/MS nº 344/1998 Lista C1", "CANMAT Clinical Guidelines for Depression", "ANVISA")
+                )
+            }
+
+            // Consulta Geral Dinâmica / Qualquer outro medicamento
             else -> {
+                val queriedTerm = prompt.replace("?", "").replace("como", "").replace("qual", "").replace("usar", "").trim().capitalize()
                 ChatMessage(
                     id = "resp_${System.currentTimeMillis()}",
                     isUser = false,
-                    messageText = "Análise farmacêutica sobre: \"$prompt\". Informações estruturadas de acordo com as normas da ANVISA e literatura clínica internacional.",
-                    technicalSummary = "Triagem técnica de suporte à conduta farmacêutica e dispensação orientada.",
-                    mechanismOfAction = "A farmacoterapia requer avaliação individualizada de posologia, função renal/hepática e adesão do paciente ao tratamento contínuo.",
+                    messageText = "Avaliação Farmacoterapêutica e Regulatória sobre: \"$queriedTerm\".",
+                    technicalSummary = "ANÁLISE FARMACOLÓGICA E DE DISPENSAÇÃO CLÍNICA (Bases ANVISA, Farmacopeia Brasileira e Micromedex).",
+                    mechanismOfAction = "A farmacoterapia requer verificação de via metabólica (hepática CYP450 vs. excreção renal inalterada), índice terapêutico, adesão do paciente e compatibilidade com tratamentos de uso contínuo.",
                     safetyAlerts = listOf(
-                        "Verificar receituário oficial com carimbo, CRM e validade regulamentar",
-                        "Orientar paciente sobre horários das tomadas com ou sem alimentos",
-                        "Aviso: Informação para suporte técnico, não substitui consulta médica formal"
+                        "Verificação de Receituário: Conferir legibilidade, carimbo e assinatura com CRM/CRO válido e data de emissão dentro do prazo regulamentar",
+                        "Tipo de Notificação: Checar se o fármaco pertence às listas da Portaria 344/98 (Receita Azul B para psicotrópicos, Amarela A para entorpecentes ou Branca 2 vias para antimicrobianos RDC 20/2011)",
+                        "Orientação ao Paciente: Informar intervalo correto das tomadas, relação com alimentos e conservação adequada da forma farmacêutica (temperatura ambiente vs. refrigeração)",
+                        "Rastreamento de Interações: Perguntar se o paciente faz uso concomitante de anti-hipertensivos, hipoglicemiantes, anticoagulantes ou álcool"
                     ),
-                    citations = listOf("ANVISA - Bulário Eletrônico", "Diretrizes Clínicas Brasileiras", "Micromedex Solutions")
+                    citations = listOf("ANVISA - Bulário Eletrônico Oficial", "Farmacopeia Brasileira 6ª Edição", "Diretrizes Clínicas Nacionais")
                 )
             }
         }

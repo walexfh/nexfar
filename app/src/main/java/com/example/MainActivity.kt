@@ -65,6 +65,20 @@ fun NexfarApp() {
         }
     }
 
+    // If user is not logged in and not exploring master admin, display LoginScreen for clean credentials
+    if (!NexfarRepository.isUserLoggedIn && !isAdminMode) {
+        LoginScreen(
+            onLoginSuccess = {
+                currentTab = NexfarTab.DASHBOARD
+                currentSubScreen = SubScreen.NONE
+            },
+            onNavigateToMasterAdmin = {
+                isAdminMode = true
+            }
+        )
+        return
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
@@ -140,7 +154,15 @@ fun NexfarApp() {
                 currentSubScreen == SubScreen.PROFILE -> {
                     ProfileScreen(
                         currentOrganization = currentOrg,
-                        onNavigateToPlans = { currentSubScreen = SubScreen.PLANS }
+                        onNavigateToPlans = { currentSubScreen = SubScreen.PLANS },
+                        onLogout = {
+                            NexfarRepository.logoutUser()
+                            currentSubScreen = SubScreen.NONE
+                        },
+                        onNavigateToAdmin = {
+                            isAdminMode = true
+                            currentSubScreen = SubScreen.NONE
+                        }
                     )
                 }
 
