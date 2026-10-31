@@ -20,3 +20,7 @@ app/.env
 debug.keystore
 *.apk
 *.aab
+node_modules/
+dist/
+web/node_modules/
+web/dist/
